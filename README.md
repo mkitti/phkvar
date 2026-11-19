@@ -1,4 +1,4 @@
-# phar
+# phkvar
 
 A `tar`/`zip`-like archiver whose archives are **phkv stores**: the perfect-hash
 binding of [refkv](https://github.com/d-v-b/refkv)
@@ -6,50 +6,50 @@ binding of [refkv](https://github.com/d-v-b/refkv)
 
 > [!WARNING]
 > An experiment. phkv is a **draft** format (format version 0) and may change
-> without regard for existing archives. phar pins one commit of refkv; an
-> archive written by one phar version may not open in another.
+> without regard for existing archives. phkvar pins one commit of refkv; an
+> archive written by one phkvar version may not open in another.
 
 ## Why phkv as an archive format?
 
-| | tar | zip | phar (phkv) |
+| | tar | zip | phkvar |
 |---|---|---|---|
 | find one member | scan the whole archive | read the central directory, then search it | hash the key: a few small reads, whatever the archive's size |
-| read a byte range of a member | scan to it | seek within it (if stored) | `phar cat -r START:END`, without decoding the rest (if stored) |
+| read a byte range of a member | scan to it | seek within it (if stored) | `phkvar cat -r START:END`, without decoding the rest (if stored) |
 | per-member compression | no (whole stream) | deflate | none, deflate or zstd |
 | duplicate files stored once | no | no | `--dedup`: later copies are references to the first |
 | members that point at bytes elsewhere | no | no | `--ref`: an index of local files, pinned by size, mtime and CRC-32C |
 | checksums | header only | CRC-32 | CRC-32C |
 | append to an existing archive | yes | yes | **no**: the perfect hash is built when the archive is closed |
 
-With `--zip`, phar writes phkv's **hybrid** profile: a valid ZIP (vzip)
+With `--zip`, phkvar writes phkv's **hybrid** profile: a valid ZIP (vzip)
 archive that also carries the phkv index in a hidden entry, `__vz__/phkv`.
 `unzip -l` lists it and `unzip` extracts its regular files.
 
 ## Install
 
 ```bash
-cargo install --git https://github.com/mkitti/phar
+cargo install --git https://github.com/mkitti/phkvar
 ```
 
 ## Use
 
 ```bash
-phar create  photos.phkv ~/Pictures/trip       # alias: phar c
-phar create  -z --dedup src.phkv -C ~/code proj  # zstd, duplicates stored once
-phar create  --zip -c deflate docs.zip docs      # also a ZIP archive
-phar create  --ref index.phkv /data/run42        # references, not copies
+phkvar create  photos.phkv ~/Pictures/trip       # alias: phkvar c
+phkvar create  -z --dedup src.phkv -C ~/code proj  # zstd, duplicates stored once
+phkvar create  --zip -c deflate docs.zip docs      # also a ZIP archive
+phkvar create  --ref index.phkv /data/run42        # references, not copies
 
-phar list    photos.phkv                         # alias: phar t
-phar list -v photos.phkv trip/day1/              # long listing, under a prefix
-phar extract photos.phkv -C restore              # alias: phar x
-phar extract photos.phkv -C restore trip/day1    # just one directory
-phar cat     photos.phkv trip/notes.txt          # one member to stdout
-phar cat     big.phkv logs/app.log -r -4096:     # its last 4 KiB
-phar test    photos.phkv                         # read everything, check CRCs
-phar info    photos.phkv                         # profile, sources, metadata
+phkvar list    photos.phkv                         # alias: phkvar t
+phkvar list -v photos.phkv trip/day1/              # long listing, under a prefix
+phkvar extract photos.phkv -C restore              # alias: phkvar x
+phkvar extract photos.phkv -C restore trip/day1    # just one directory
+phkvar cat     photos.phkv trip/notes.txt          # one member to stdout
+phkvar cat     big.phkv logs/app.log -r -4096:     # its last 4 KiB
+phkvar test    photos.phkv                         # read everything, check CRCs
+phkvar info    photos.phkv                         # profile, sources, metadata
 ```
 
-`phar <command> --help` lists every option.
+`phkvar <command> --help` lists every option.
 
 ## How files map onto the store
 
@@ -57,7 +57,7 @@ phar info    photos.phkv                         # profile, sources, metadata
 |---|---|---|---|
 | regular file `a/b.txt` | `a/b.txt` | its bytes (or a reference: `--dedup`, `--ref`) | `mode`, `mtime` |
 | directory `a/` | `a/` | empty | `mode`, `mtime` |
-| symbolic link `a/l` | `a/l` | the link's target | `mode`, `mtime`, `github.com/mkitti/phar:type` = `symlink` |
+| symbolic link `a/l` | `a/l` | the link's target | `mode`, `mtime`, `github.com/mkitti/phkvar:type` = `symlink` |
 
 `mode` (POSIX permission bits) and `mtime` (nanoseconds since the epoch) are
 phkv's registered properties, so other phkv readers understand them. Paths are
@@ -81,7 +81,7 @@ otherwise an archive could make extraction copy any readable local file.
 ZIP tools do not understand refkv references: a reference entry's ZIP body is
 its reference payload, not the file. Archives meant for plain `unzip` should
 not use `--dedup` or `--ref`. ZIP entries carry no timestamps or modes from
-phar (they read 1980-01-01); those live in the phkv index.
+phkvar (they read 1980-01-01); those live in the phkv index.
 
 ## Development
 

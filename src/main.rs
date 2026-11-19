@@ -1,4 +1,4 @@
-//! phar: a tar/zip-like archiver whose archives are phkv stores (refkv's perfect-hash binding,
+//! phkvar: a tar/zip-like archiver whose archives are phkv stores (refkv's perfect-hash binding,
 //! https://github.com/d-v-b/refkv/blob/main/spec/bindings/phkv.md).
 //!
 //! Each archived path is a key; a file's bytes are its value; its mode and mtime are the
@@ -14,12 +14,12 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 /// The property that marks entries that are not regular files or directories.
-pub const TYPE_PROP: &str = "github.com/mkitti/phar:type";
+pub const TYPE_PROP: &str = "github.com/mkitti/phkvar:type";
 /// The METADATA entry naming the program that wrote the archive.
-pub const CREATOR_META: &str = "github.com/mkitti/phar:creator";
+pub const CREATOR_META: &str = "github.com/mkitti/phkvar:creator";
 
 #[derive(Parser)]
-#[command(name = "phar", version, about = "Archive files into phkv stores, list them, and extract them")]
+#[command(name = "phkvar", version, about = "Archive files into phkv stores, list them, and extract them")]
 struct Cli {
     #[command(subcommand)]
     cmd: Cmd,
@@ -131,7 +131,7 @@ fn main() -> ExitCode {
     match r {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
-            eprintln!("phar: {e}");
+            eprintln!("phkvar: {e}");
             ExitCode::FAILURE
         }
     }

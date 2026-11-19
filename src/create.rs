@@ -1,4 +1,4 @@
-//! `phar create`: walks the inputs and writes a standalone or hybrid phkv store.
+//! `phkvar create`: walks the inputs and writes a standalone or hybrid phkv store.
 
 use crate::paths::key_of;
 use crate::{CREATOR_META, Compression, Context, Result, TYPE_PROP};
@@ -115,7 +115,7 @@ pub fn create(args: &Args) -> Result<()> {
         let key = key_of(p)?;
         add_path(&mut st, p, &key)?;
     }
-    st.out.set_metadata(CREATOR_META, format!("phar {}", env!("CARGO_PKG_VERSION")).as_bytes()).ctx("metadata")?;
+    st.out.set_metadata(CREATOR_META, format!("phkvar {}", env!("CARGO_PKG_VERSION")).as_bytes()).ctx("metadata")?;
     let count = st.count;
     st.out.close().ctx(args.archive.display())?;
     if args.verbose {
@@ -152,12 +152,12 @@ fn add_path(st: &mut State, path: &Path, key: &str) -> Result<()> {
             return Err(format!("{}: no name to archive it under", path.display()));
         }
         if st.archive.is_some() && fs::canonicalize(path).ok() == st.archive {
-            eprintln!("phar: {}: skipping the archive itself", path.display());
+            eprintln!("phkvar: {}: skipping the archive itself", path.display());
             return Ok(());
         }
         add_file(st, path, key, &md)
     } else {
-        eprintln!("phar: {}: skipping a special file", path.display());
+        eprintln!("phkvar: {}: skipping a special file", path.display());
         Ok(())
     }
 }

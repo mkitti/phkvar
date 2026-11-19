@@ -1,12 +1,12 @@
-//! End-to-end tests of the `phar` binary.
+//! End-to-end tests of the `phkvar` binary.
 
 use std::fs;
 use std::path::Path;
 use std::process::{Command, Output};
 
-fn phar(dir: &Path, args: &[&str]) -> Output {
-    let out = Command::new(env!("CARGO_BIN_EXE_phar")).current_dir(dir).args(args).output().unwrap();
-    assert!(out.status.success(), "phar {args:?} failed: {}", String::from_utf8_lossy(&out.stderr));
+fn phkvar(dir: &Path, args: &[&str]) -> Output {
+    let out = Command::new(env!("CARGO_BIN_EXE_phkvar")).current_dir(dir).args(args).output().unwrap();
+    assert!(out.status.success(), "phkvar {args:?} failed: {}", String::from_utf8_lossy(&out.stderr));
     out
 }
 
@@ -51,9 +51,9 @@ fn round_trip(create: &[&str]) {
     let mut args = vec!["create"];
     args.extend_from_slice(create);
     args.extend_from_slice(&["out.phkv", "d"]);
-    phar(t.path(), &args);
-    phar(t.path(), &["test", "out.phkv"]);
-    phar(t.path(), &["extract", "out.phkv", "-C", "x"]);
+    phkvar(t.path(), &args);
+    phkvar(t.path(), &["test", "out.phkv"]);
+    phkvar(t.path(), &["extract", "out.phkv", "-C", "x"]);
     same_tree(&t.path().join("d"), &t.path().join("x/d"));
 }
 
@@ -70,15 +70,15 @@ fn round_trips() {
 fn list_and_cat() {
     let t = tempfile::tempdir().unwrap();
     tree(t.path());
-    phar(t.path(), &["c", "-z", "a.phkv", "d"]);
-    let keys = String::from_utf8(phar(t.path(), &["t", "a.phkv"]).stdout).unwrap();
+    phkvar(t.path(), &["c", "-z", "a.phkv", "d"]);
+    let keys = String::from_utf8(phkvar(t.path(), &["t", "a.phkv"]).stdout).unwrap();
     assert!(keys.lines().any(|k| k == "d/sub/empty/"));
     assert!(keys.lines().any(|k| k == "d/a.txt"));
-    let only = String::from_utf8(phar(t.path(), &["t", "a.phkv", "d/sub/"]).stdout).unwrap();
+    let only = String::from_utf8(phkvar(t.path(), &["t", "a.phkv", "d/sub/"]).stdout).unwrap();
     assert!(only.lines().all(|k| k.starts_with("d/sub/")));
-    assert_eq!(phar(t.path(), &["cat", "a.phkv", "d/a.txt"]).stdout, b"alpha\n");
-    assert_eq!(phar(t.path(), &["cat", "a.phkv", "d/sub/nums.txt", "-r", "2:6"]).stdout, b"1\n2\n");
-    assert_eq!(phar(t.path(), &["cat", "a.phkv", "d/sub/nums.txt", "-r", "-6:"]).stdout, b"19999\n");
+    assert_eq!(phkvar(t.path(), &["cat", "a.phkv", "d/a.txt"]).stdout, b"alpha\n");
+    assert_eq!(phkvar(t.path(), &["cat", "a.phkv", "d/sub/nums.txt", "-r", "2:6"]).stdout, b"1\n2\n");
+    assert_eq!(phkvar(t.path(), &["cat", "a.phkv", "d/sub/nums.txt", "-r", "-6:"]).stdout, b"19999\n");
 }
 
 #[test]
@@ -88,23 +88,23 @@ fn dedup_stores_once() {
     let big: Vec<u8> = (0..1_000_000u32).map(|i| (i.wrapping_mul(2_654_435_761) >> 24) as u8).collect();
     fs::write(t.path().join("d/one"), &big).unwrap();
     fs::write(t.path().join("d/two"), &big).unwrap();
-    phar(t.path(), &["c", "plain.phkv", "d"]);
-    phar(t.path(), &["c", "--dedup", "dedup.phkv", "d"]);
+    phkvar(t.path(), &["c", "plain.phkv", "d"]);
+    phkvar(t.path(), &["c", "--dedup", "dedup.phkv", "d"]);
     let (plain, dedup) = (fs::metadata(t.path().join("plain.phkv")).unwrap().len(), fs::metadata(t.path().join("dedup.phkv")).unwrap().len());
     assert!(plain > 2_000_000 && dedup < 1_100_000, "{plain} {dedup}");
-    assert_eq!(phar(t.path(), &["cat", "dedup.phkv", "d/two"]).stdout, big);
+    assert_eq!(phkvar(t.path(), &["cat", "dedup.phkv", "d/two"]).stdout, big);
 }
 
 #[test]
 fn references_need_resolving_and_pins_hold() {
     let t = tempfile::tempdir().unwrap();
     tree(t.path());
-    phar(t.path(), &["c", "--ref", "r.phkv", "d"]);
-    let out = Command::new(env!("CARGO_BIN_EXE_phar")).current_dir(t.path()).args(["cat", "r.phkv", "d/a.txt"]).output().unwrap();
+    phkvar(t.path(), &["c", "--ref", "r.phkv", "d"]);
+    let out = Command::new(env!("CARGO_BIN_EXE_phkvar")).current_dir(t.path()).args(["cat", "r.phkv", "d/a.txt"]).output().unwrap();
     assert!(!out.status.success());
-    assert_eq!(phar(t.path(), &["cat", "--resolve-files", "r.phkv", "d/a.txt"]).stdout, b"alpha\n");
+    assert_eq!(phkvar(t.path(), &["cat", "--resolve-files", "r.phkv", "d/a.txt"]).stdout, b"alpha\n");
     fs::write(t.path().join("d/a.txt"), "changed!\n").unwrap();
-    let out = Command::new(env!("CARGO_BIN_EXE_phar")).current_dir(t.path()).args(["cat", "--resolve-files", "r.phkv", "d/a.txt"]).output().unwrap();
+    let out = Command::new(env!("CARGO_BIN_EXE_phkvar")).current_dir(t.path()).args(["cat", "--resolve-files", "r.phkv", "d/a.txt"]).output().unwrap();
     assert!(!out.status.success(), "a changed file must not resolve");
 }
 
@@ -112,8 +112,8 @@ fn references_need_resolving_and_pins_hold() {
 fn extract_selected_members() {
     let t = tempfile::tempdir().unwrap();
     tree(t.path());
-    phar(t.path(), &["c", "a.phkv", "d"]);
-    phar(t.path(), &["x", "a.phkv", "-C", "x", "d/sub"]);
+    phkvar(t.path(), &["c", "a.phkv", "d"]);
+    phkvar(t.path(), &["x", "a.phkv", "-C", "x", "d/sub"]);
     assert!(t.path().join("x/d/sub/nums.txt").exists());
     assert!(t.path().join("x/d/sub/empty").is_dir());
     assert!(!t.path().join("x/d/a.txt").exists());
