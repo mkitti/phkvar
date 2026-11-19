@@ -1,0 +1,29 @@
+[package]
+name = "phtar"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+description = "A tar/zip-like archiver built on phkv, refkv's perfect-hash key-value store"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/mkitti/phtar"
+publish = false
+
+[[bin]]
+name = "phtar"
+path = "src/main.rs"
+
+[dependencies]
+# refkv's perfect-hash binding (spec/bindings/phkv.md), and the vzip crate it builds on (for the
+# protobuf Range/Source messages). Both are pinned to one commit of d-v-b/refkv: phkv is a draft
+# and its format may still change.
+refkv-phkv = { git = "https://github.com/d-v-b/refkv", rev = "950720988920155ec8b6485660145015c373bfd4" }
+refkv-vzip = { git = "https://github.com/d-v-b/refkv", rev = "950720988920155ec8b6485660145015c373bfd4" }
+clap = { version = "4.5", features = ["derive"] }
+crc32c = "0.6"
+xxhash-rust = { version = "0.8", features = ["xxh3"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+opt-level = 3
