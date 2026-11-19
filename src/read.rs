@@ -194,7 +194,7 @@ pub fn extract(archive: &Path, members: &[String], root: &Path, resolve_files: b
                 }
             }
             Err(e) => {
-                eprintln!("phtar: {e}");
+                eprintln!("phar: {e}");
                 failures += 1;
             }
         }

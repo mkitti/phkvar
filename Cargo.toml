@@ -1,15 +1,15 @@
 [package]
-name = "phtar"
+name = "phar"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.88"
 description = "A tar/zip-like archiver built on phkv, refkv's perfect-hash key-value store"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/mkitti/phtar"
+repository = "https://github.com/mkitti/phar"
 publish = false
 
 [[bin]]
-name = "phtar"
+name = "phar"
 path = "src/main.rs"
 
 [dependencies]
